@@ -1,0 +1,12 @@
+{
+    "id": "org.prymatex.python",
+    "name" : "Python Tools",
+    "version" : "1.0",
+    "website" : "www.prymatex.org",
+    "author" : "Prymatex",
+    "description" : "",
+    "depends" : [],
+    "package": "pmxpy",
+    "register": "registerPlugin",
+    "unregister": "unregisterPlugin"
+}
