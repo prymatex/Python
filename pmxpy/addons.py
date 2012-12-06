@@ -2,24 +2,56 @@
 #-*- encoding: utf-8 -*-
 
 from prymatex.qt import QtGui, QtCore
+from prymatex import resources
 
 from prymatex.gui.codeeditor.sidebar import SideBarWidgetAddon
 
 class PepCheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
     ALIGNMENT = QtCore.Qt.AlignLeft
+    WIDTH = 10
     
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.setFixedWidth(10)
+        self.warningImage = resources.getImage("SP_MessageBoxWarning", WIDTH)
+        self.criticalImage = resources.getImage("SP_MessageBoxCritical", WIDTH)
+        self.setFixedWidth(WIDTH)
         
     def initialize(self, editor):
         SideBarWidgetAddon.initialize(self, editor)
-        self.background = self.editor.colours['selection']
+        self.background = self.editor.colours['gutter'] if 'gutter' in self.editor.colours else self.editor.colours['background']
         self.editor.themeChanged.connect(self.updateColours)
+        self.editor.registerTextCharFormatBuilder("line.warning", self.textCharFormat_warning_builder)
+        self.editor.registerTextCharFormatBuilder("line.critical", self.textCharFormat_critical_builder)
+        
+        #Conect signals
+        self.editor.afterOpen.connect(self.on_editor_afterOpen)
         
     def updateColours(self):
-        self.background = self.editor.colours['selection']
+        self.background = self.editor.colours['gutter'] if 'gutter' in self.editor.colours else self.editor.colours['background']
         self.repaint(self.rect())
+
+    def on_editor_afterOpen(self):
+        cursor = self.editor.newCursorAtPosition(10)
+        self.editor.setExtraSelectionCursors("line.critical", [ cursor ])
+        self.editor.updateExtraSelections()
+                
+    def textCharFormat_warning_builder(self):
+        format = QtGui.QTextCharFormat()
+        format.setFontUnderline(True)
+        format.setUnderlineColor(QtCore.Qt.yellow) 
+        format.setUnderlineStyle(QtGui.QTextCharFormat.SpellCheckUnderline)
+        format.setBackground(QtCore.Qt.transparent)
+        format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
+        return format
+        
+    def textCharFormat_critical_builder(self):
+        format = QtGui.QTextCharFormat()
+        format.setFontUnderline(True)
+        format.setUnderlineColor(QtCore.Qt.red) 
+        format.setUnderlineStyle(QtGui.QTextCharFormat.SpellCheckUnderline)
+        format.setBackground(QtCore.Qt.transparent)
+        format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
+        return format
 
     @classmethod
     def contributeToMainMenu(cls):
@@ -32,15 +64,14 @@ class PepCheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
             return instance.isVisible()
         
         baseMenu = ("View", cls.ALIGNMENT == QtCore.Qt.AlignRight and "Right Gutter" or "Left Gutter")
-        menuEntry = {'text': "Pep Checker",
+        menuEntry = {'text': "Python checker",
             'callback': on_actionShowErrors_toggled,
-            'shortcut': 'Alt+F10',
             'checkable': True,
             'testChecked': on_actionShowErrors_testChecked }
         return { baseMenu: menuEntry} 
 
     def paintEvent(self, event):
-        font_metrics = QtGui.QFontMetrics(self.editor.font)
+        font_metrics = self.editor.fontMetrics()
         page_bottom = self.editor.viewport().height()
        
         painter = QtGui.QPainter(self)
@@ -56,7 +87,12 @@ class PepCheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
             if position.y() > page_bottom:
                 break
 
+            # Draw the line number right justified at the y position of the line.
+            if block.isVisible():
+                painter.drawPixmap(0,
+                    round(position.y()) + font_metrics.ascent() + font_metrics.descent() - self.warningImage.height(),
+                    self.warningImage)
             block = block.next()
-
+            
         painter.end()
         QtGui.QWidget.paintEvent(self, event)
