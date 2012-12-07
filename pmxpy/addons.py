@@ -29,7 +29,7 @@ class QtReport(StandardReport):
             return
         return super(QtReport, self).error(line_number, offset, text, check)
 
-class PepCheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
+class CheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
     ALIGNMENT = QtCore.Qt.AlignLeft
     WIDTH = 10
     

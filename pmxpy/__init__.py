@@ -4,8 +4,8 @@
 from prymatex.gui.codeeditor.editor import CodeEditor
 
 from pmxpy.ipython import IPythonDock
-from pmxpy.addons import PepCheckerSideBarAddon
+from pmxpy.addons import CheckerSideBarAddon
 
 def registerPlugin(manager):
     manager.registerDocker(IPythonDock)
-    manager.registerAddon(CodeEditor, PepCheckerSideBarAddon)
+    #manager.registerAddon(CodeEditor, CheckerSideBarAddon)
