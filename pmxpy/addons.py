@@ -6,15 +6,38 @@ from prymatex import resources
 
 from prymatex.gui.codeeditor.sidebar import SideBarWidgetAddon
 
+from pmxpy.tools.pep8 import Checker as Pep8Checker, StandardReport, BENCHMARK_KEYS, REPORT_FORMAT
+
+class PepOptions(object):
+    benchmark_keys = BENCHMARK_KEYS[:]
+    ignore_code = False
+    format = REPORT_FORMAT['default']
+    repeat = True
+    show_source = True
+    show_pep8 = True
+    
+class QtReport(StandardReport):
+    """Collect and print the results for the changed lines only."""
+
+    def __init__(self):
+        super(QtReport, self).__init__(PepOptions())
+        self._selected = []
+
+    def error(self, line_number, offset, text, check):
+        print line_number, offset, text, check
+        if line_number not in self._selected:
+            return
+        return super(QtReport, self).error(line_number, offset, text, check)
+
 class PepCheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
     ALIGNMENT = QtCore.Qt.AlignLeft
     WIDTH = 10
     
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.warningImage = resources.getImage("SP_MessageBoxWarning", WIDTH)
-        self.criticalImage = resources.getImage("SP_MessageBoxCritical", WIDTH)
-        self.setFixedWidth(WIDTH)
+        self.warningImage = resources.getImage("SP_MessageBoxWarning", self.WIDTH)
+        self.criticalImage = resources.getImage("SP_MessageBoxCritical", self.WIDTH)
+        self.setFixedWidth(self.WIDTH)
         
     def initialize(self, editor):
         SideBarWidgetAddon.initialize(self, editor)
@@ -31,9 +54,9 @@ class PepCheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
         self.repaint(self.rect())
 
     def on_editor_afterOpen(self):
-        cursor = self.editor.newCursorAtPosition(10)
-        self.editor.setExtraSelectionCursors("line.critical", [ cursor ])
-        self.editor.updateExtraSelections()
+        sourceLines = self.editor.toPlainText().splitlines()
+        checker = Pep8Checker(self.editor.filePath, lines = sourceLines, report = QtReport())
+        checker.check_all()
                 
     def textCharFormat_warning_builder(self):
         format = QtGui.QTextCharFormat()
@@ -88,10 +111,10 @@ class PepCheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
                 break
 
             # Draw the line number right justified at the y position of the line.
-            if block.isVisible():
-                painter.drawPixmap(0,
-                    round(position.y()) + font_metrics.ascent() + font_metrics.descent() - self.warningImage.height(),
-                    self.warningImage)
+            #if block.isVisible():
+            #    painter.drawPixmap(0,
+            #        round(position.y()) + font_metrics.ascent() + font_metrics.descent() - self.warningImage.height(),
+            #        self.warningImage)
             block = block.next()
             
         painter.end()

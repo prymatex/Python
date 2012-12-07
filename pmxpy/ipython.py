@@ -8,6 +8,7 @@ from prymatex.core import PMXBaseDock
 from prymatex import resources
 from prymatex.utils.i18n import ugettext as _
 
+
 class IPythonDock(QtGui.QDockWidget, PMXBaseDock):
     SHORTCUT = "Shift+F4"
     ICON = resources.getIcon("applications-utilities")
