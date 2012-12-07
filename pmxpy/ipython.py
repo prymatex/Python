@@ -21,7 +21,7 @@ class IPythonDock(QtGui.QDockWidget, PMXBaseDock):
         self.setObjectName(_("IPythonDock"))
         self.kernelManager, self.connection = self.buildKernelManager()
         self.setupConsole()
-
+        
     def setupConsole(self):
         try:
             from IPython.frontend.qt.console.ipython_widget import IPythonWidget

@@ -1,12 +1,14 @@
 {
     "id": "org.prymatex.python",
     "name" : "Python Tools",
+    "icon": "share/Icons/python.png",
     "version" : "1.0",
     "website" : "www.prymatex.org",
     "author" : "Prymatex",
     "description" : "",
-    "depends" : [],
+    "depends" : [ "org.prymatex.codeeditor" ],
     "package": "pmxpy",
+    "share": "share",
     "register": "registerPlugin",
     "unregister": "unregisterPlugin"
 }
