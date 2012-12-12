@@ -5,29 +5,7 @@ from prymatex.qt import QtGui, QtCore
 from prymatex import resources
 
 from prymatex.gui.codeeditor.sidebar import SideBarWidgetAddon
-
-from pmxpy.tools.pep8 import Checker as Pep8Checker, StandardReport, BENCHMARK_KEYS, REPORT_FORMAT
-
-class PepOptions(object):
-    benchmark_keys = BENCHMARK_KEYS[:]
-    ignore_code = False
-    format = REPORT_FORMAT['default']
-    repeat = True
-    show_source = True
-    show_pep8 = True
-    
-class QtReport(StandardReport):
-    """Collect and print the results for the changed lines only."""
-
-    def __init__(self):
-        super(QtReport, self).__init__(PepOptions())
-        self._selected = []
-
-    def error(self, line_number, offset, text, check):
-        print line_number, offset, text, check
-        if line_number not in self._selected:
-            return
-        return super(QtReport, self).error(line_number, offset, text, check)
+from pmxpy.checker import CheckerThread
 
 class CheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
     ALIGNMENT = QtCore.Qt.AlignLeft
@@ -37,31 +15,41 @@ class CheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
         QtGui.QWidget.__init__(self, parent)
         self.warningImage = resources.getImage("SP_MessageBoxWarning", self.WIDTH)
         self.criticalImage = resources.getImage("SP_MessageBoxCritical", self.WIDTH)
+        self.checkerThread = CheckerThread(self)
+        self.checkerThread.errorFound.connect(self.on_checkerThread_errorFound)
+        self.errors = {}
         self.setFixedWidth(self.WIDTH)
         
     def initialize(self, editor):
         SideBarWidgetAddon.initialize(self, editor)
         self.background = self.editor.colours['gutter'] if 'gutter' in self.editor.colours else self.editor.colours['background']
-        self.editor.themeChanged.connect(self.updateColours)
         self.editor.registerTextCharFormatBuilder("line.warning", self.textCharFormat_warning_builder)
         self.editor.registerTextCharFormatBuilder("line.critical", self.textCharFormat_critical_builder)
         
         #Conect signals
-        self.editor.afterOpen.connect(self.on_editor_afterOpen)
+        self.editor.themeChanged.connect(self.on_editor_updateColours)
+        self.editor.document().contentsChange.connect(self.on_document_contentsChange)
+        self.editor.syntaxReady.connect(self.on_editor_syntaxReady)
         
-    def updateColours(self):
+    def on_checkerThread_errorFound(self, number, offset, text):
+        self.errors[number - 1] = (offset, text)
+
+    def on_editor_updateColours(self):
         self.background = self.editor.colours['gutter'] if 'gutter' in self.editor.colours else self.editor.colours['background']
         self.repaint(self.rect())
 
-    def on_editor_afterOpen(self):
-        sourceLines = self.editor.toPlainText().splitlines()
-        checker = Pep8Checker(self.editor.filePath, lines = sourceLines, report = QtReport())
-        checker.check_all()
+    def on_document_contentsChange(self, position, removed, added):
+        print position, removed, added
+        
+        
+    def on_editor_syntaxReady(self):
+        lines = ['%s\n' % line for line in self.editor.toPlainText().splitlines()]
+        self.checkerThread.checkAll(self.editor.filePath, lines)
                 
     def textCharFormat_warning_builder(self):
         format = QtGui.QTextCharFormat()
         format.setFontUnderline(True)
-        format.setUnderlineColor(QtCore.Qt.yellow) 
+        format.setUnderlineColor(QtCore.Qt.yellow)
         format.setUnderlineStyle(QtGui.QTextCharFormat.SpellCheckUnderline)
         format.setBackground(QtCore.Qt.transparent)
         format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
@@ -70,7 +58,7 @@ class CheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
     def textCharFormat_critical_builder(self):
         format = QtGui.QTextCharFormat()
         format.setFontUnderline(True)
-        format.setUnderlineColor(QtCore.Qt.red) 
+        format.setUnderlineColor(QtCore.Qt.red)
         format.setUnderlineStyle(QtGui.QTextCharFormat.SpellCheckUnderline)
         format.setBackground(QtCore.Qt.transparent)
         format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
@@ -110,11 +98,10 @@ class CheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
             if position.y() > page_bottom:
                 break
 
-            # Draw the line number right justified at the y position of the line.
-            #if block.isVisible():
-            #    painter.drawPixmap(0,
-            #        round(position.y()) + font_metrics.ascent() + font_metrics.descent() - self.warningImage.height(),
-            #        self.warningImage)
+            if block.isVisible() and block.blockNumber() in self.errors:
+                painter.drawPixmap(0,
+                    round(position.y()) + font_metrics.ascent() + font_metrics.descent() - self.warningImage.height(),
+                    self.warningImage)
             block = block.next()
             
         painter.end()
