@@ -8,4 +8,4 @@ from pmxpy.addons import CheckerSideBarAddon
 
 def registerPlugin(manager):
     manager.registerDocker(IPythonDock)
-    manager.registerAddon(CodeEditor, CheckerSideBarAddon)
+    #manager.registerAddon(CodeEditor, CheckerSideBarAddon)
