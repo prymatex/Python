@@ -27,9 +27,9 @@ class CheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
         self.editor.registerTextCharFormatBuilder("line.critical", self.textCharFormat_critical_builder)
         
         #Conect signals
-        self.editor.themeChanged.connect(self.on_editor_updateColours)
-        self.editor.document().contentsChange.connect(self.on_document_contentsChange)
-        self.editor.syntaxReady.connect(self.on_editor_syntaxReady)
+        #self.editor.themeChanged.connect(self.on_editor_updateColours)
+        #self.editor.document().contentsChange.connect(self.on_document_contentsChange)
+        #self.editor.syntaxReady.connect(self.on_editor_syntaxReady)
         
     def on_checkerThread_errorFound(self, number, offset, text):
         self.errors[number - 1] = (offset, text)
@@ -67,12 +67,13 @@ class CheckerSideBarAddon(QtGui.QWidget, SideBarWidgetAddon):
     @classmethod
     def contributeToMainMenu(cls):
         def on_actionShowErrors_toggled(editor, checked):
-            instance = editor.addonByClass(cls)
-            instance.setVisible(checked)
+            instance = editor.findChild(cls, cls.__name__)
+            if instance is not None:
+                instance.setVisible(checked)
 
         def on_actionShowErrors_testChecked(editor):
-            instance = editor.addonByClass(cls)
-            return instance.isVisible()
+            instance = editor.findChild(cls, cls.__name__)
+            return instance is not None and instance.isVisible()
         
         baseMenu = ("View", cls.ALIGNMENT == QtCore.Qt.AlignRight and "Right Gutter" or "Left Gutter")
         menuEntry = {'text': "Python checker",
