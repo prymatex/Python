@@ -7,7 +7,7 @@ import sys
 import os
 import _ast
 
-checker = __import__("pyflakes.checker").checker
+from .pyflakes import checker
 
 def check(codeString, filename):
     """

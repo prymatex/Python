@@ -3,7 +3,8 @@
 
 from prymatex.qt import QtCore
 
-from pmxpy.tools.pep8 import Checker as Pep8Checker, StandardReport, StyleGuide
+from .tools import Pep8Checker, StandardReport, StyleGuide
+from .tools import pyflakesChecker
 
 class CheckerThread(QtCore.QThread, StandardReport):
     errorFound = QtCore.pyqtSignal(int, int, str)
