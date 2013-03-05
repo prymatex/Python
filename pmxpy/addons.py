@@ -6,7 +6,8 @@ from prymatex import resources
 
 from prymatex.gui.codeeditor.addons import CodeEditorAddon
 
-from pmxpy.checker import CheckerThread, pyflakesChecker
+from pmxpy.checker import CheckerThread
+from pmxpy.tools import pyflakesChecker
 
 class PythonCheckerAddon(CodeEditorAddon):
 
