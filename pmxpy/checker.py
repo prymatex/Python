@@ -4,7 +4,6 @@
 from prymatex.qt import QtCore
 
 from .tools import Pep8Checker, StandardReport, StyleGuide
-from .tools import pyflakesChecker
 
 class CheckerThread(QtCore.QThread, StandardReport):
     errorFound = QtCore.pyqtSignal(int, int, str)
@@ -21,7 +20,7 @@ class CheckerThread(QtCore.QThread, StandardReport):
             return
         self.errorFound.emit(line_number, offset, text)
         #return StandardReport.error(self, line_number, offset, text, check)
-        
+
     def checkAll(self, filePath, lines):
         self._cancel = False
         self.filePath = filePath

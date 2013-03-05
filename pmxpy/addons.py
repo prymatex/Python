@@ -9,6 +9,8 @@ from prymatex.gui.codeeditor.addons import CodeEditorAddon
 from pmxpy.checker import CheckerThread, pyflakesChecker
 
 class PythonCheckerAddon(CodeEditorAddon):
+
+
     def __init__(self, parent):
         CodeEditorAddon.__init__(self, parent)
         self.setObjectName(self.__class__.__name__)
@@ -21,16 +23,21 @@ class PythonCheckerAddon(CodeEditorAddon):
         CodeEditorAddon.initialize(self, editor)
         self.editor.registerTextCharFormatBuilder("line.warning", self.textCharFormat_warning_builder)
         self.editor.registerTextCharFormatBuilder("line.critical", self.textCharFormat_critical_builder)
-        
+
         #Conect signals
         self.editor.document().contentsChange.connect(self.on_document_contentsChange)
         self.editor.syntaxChanged.connect(self.on_editor_syntaxChanged)
-        
+
     def on_checkerThread_errorFound(self, number, offset, text):
-        block = self.editor.document().findBlockByLineNumber(number)
-        cursor = self.editor.newCursorAtPosition(block.position() + offset, block.position() + block.length())
-        self.errors[cursor] = text
-        self.editor.setExtraSelectionCursors("line.warning", self.errors.keys())
+        block = self.editor.document().findBlockByNumber(number - 1)
+        errorStart = block.position() + offset
+        errorEnd = errorStart + block.length() - offset
+        cursor = self.editor.newCursorAtPosition(errorStart, errorEnd)
+        self.errors.setdefault(block, []).append((cursor, text))
+        print text
+        # Solo muestro el primero si tiene muchos errores
+        format = "line.warning" if text.startswith("W") else "line.critical"
+        self.editor.extendExtraSelectionCursors(format, [ cursor ])
 
     def on_document_contentsChange(self, position, removed, added):
         if self.activated and self.enabled:
@@ -42,24 +49,34 @@ class PythonCheckerAddon(CodeEditorAddon):
             self.checkAllText()
 
     def checkAllText(self):
-        lines = ['%s\n' % line for line in self.editor.toPlainText().splitlines()]
+        plainText = self.editor.toPlainText()
+        lines = ['%s\n' % line for line in plainText.splitlines()]
         self.checkerThread.checkAll(self.editor.filePath, lines)
-        
-            
+        pyflakesChecker(plainText.encode("utf8","ignore"), self.editor.filePath)
+
     def textCharFormat_warning_builder(self):
         format = QtGui.QTextCharFormat()
         format.setFontUnderline(True)
         format.setUnderlineColor(QtCore.Qt.yellow)
-        format.setUnderlineStyle(QtGui.QTextCharFormat.SpellCheckUnderline)
+        format.setUnderlineStyle(QtGui.QTextCharFormat.SingleUnderline)
         format.setBackground(QtCore.Qt.transparent)
         format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
         return format
-        
+
+    #QTextCharFormat::NoUnderline
+    #QTextCharFormat::SingleUnderline
+    #QTextCharFormat::DashUnderline
+    #QTextCharFormat::DotLine
+    #QTextCharFormat::DashDotLine
+    #QTextCharFormat::DashDotDotLine
+    #QTextCharFormat::WaveUnderline
+    #QTextCharFormat::SpellCheckUnderline
+
     def textCharFormat_critical_builder(self):
         format = QtGui.QTextCharFormat()
         format.setFontUnderline(True)
         format.setUnderlineColor(QtCore.Qt.red)
-        format.setUnderlineStyle(QtGui.QTextCharFormat.SpellCheckUnderline)
+        format.setUnderlineStyle(QtGui.QTextCharFormat.SingleUnderline)
         format.setBackground(QtCore.Qt.transparent)
         format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
         return format
@@ -76,23 +93,29 @@ class PythonCheckerAddon(CodeEditorAddon):
             instance = editor.findChild(cls, cls.__name__)
             return instance is not None and instance.activated
 
-        def on_actionChecker_testEnabled(editor):
+        def on_actionCheckers_testEnabled(editor):
             instance = editor.findChild(cls, cls.__name__)
             return instance.enabled
 
-        baseMenu = "Python"
         menuEntry = {
             'name': 'python',
-            'text': 'Python',
+            'text': 'P&ython',
             'items': [
                 {
-                    'name': 'checker',
-                    'text': 'Checker',
-                    'callback': on_actionChecker_toggled,
-                    'checkable': True,
-                    'testChecked': on_actionChecker_testChecked,
-                    'testEnabled': on_actionChecker_testEnabled
+                    'name': 'checkers',
+                    'text': 'Checkers',
+                    'testEnabled': on_actionCheckers_testEnabled,
+                    'items': [
+                        {   'text': 'Pep8',
+                            'checkable': True,
+                            'callback': on_actionChecker_toggled,
+                            'testChecked': on_actionChecker_testChecked,
+                        },
+                        {   'text': 'Pyflakes',
+                            'checkable': True,
+                        },
+                        {'text': 'Fix errors'}]
                 }
             ]
         }
-        return { baseMenu: menuEntry }
+        return { 'python': menuEntry }

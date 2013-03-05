@@ -63,3 +63,21 @@ class IPythonDock(QtGui.QDockWidget, PMXBaseDock):
             env["PMX_IPYTHON_CONNECTION"] = self.connection
             env["PMX_IPYTHON_KERNEL"] = self.connection
         return env
+        
+    @classmethod
+    def contributeToMainMenu(cls):
+        menuEntry = {
+            'name': 'python',
+            'text': 'P&ython',
+            'items': [
+                {
+                    'name': 'ipython',
+                    'text': 'IPython',
+                    'items': [
+                        {'text': 'Option1' },
+                        {'text': 'Option2' },
+                        {'text': 'Option3'}]
+                }
+            ]
+        }
+        return { 'python': menuEntry }
