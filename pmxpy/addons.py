@@ -19,6 +19,7 @@ class PythonCheckerAddon(CodeEditorAddon):
         self.checkerThread = CheckerThread(self)
         self.checkerThread.errorFound.connect(self.on_checkerThread_errorFound)
         self.errors = {}
+        self.pythonSelector = self.application.supportManager.createScopeSelector("source.python")
 
     def initialize(self, editor):
         CodeEditorAddon.initialize(self, editor)
@@ -45,7 +46,7 @@ class PythonCheckerAddon(CodeEditorAddon):
             print position, removed, added
 
     def on_editor_syntaxChanged(self, syntax):
-        self.enabled = syntax.scopeName == "source.python"
+        self.enabled = self.pythonSelector.does_match(syntax.scopeName)
         if self.activated and self.enabled:
             self.checkAllText()
 
