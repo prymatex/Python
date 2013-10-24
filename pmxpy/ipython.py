@@ -8,7 +8,6 @@ from prymatex.core import PMXBaseDock
 from prymatex import resources
 from prymatex.utils.i18n import ugettext as _
 
-
 class IPythonDock(QtGui.QDockWidget, PMXBaseDock):
     SHORTCUT = "Shift+F4"
     ICON = resources.getIcon("applications-utilities")
@@ -19,14 +18,45 @@ class IPythonDock(QtGui.QDockWidget, PMXBaseDock):
         PMXBaseDock.__init__(self)
         self.setWindowTitle(_("IPython"))
         self.setObjectName(_("IPythonDock"))
-        self.kernelManager, self.connection = self.buildKernelManager()
-        self.setupConsole()
+        self.kernelApp = self.buildKernelApp()
+        self.kernelManager, self.connection = self.buildKernelManager(self.kernelApp)
+        self.setupConsole(self.kernelManager)
         
-    def setupConsole(self):
+    def _event_loop(self, kernel):
+        kernel.timer = QtCore.QTimer()
+        kernel.timer.timeout.connect(kernel.do_one_iteration)
+        kernel.timer.start(1000 * kernel._poll_interval)
+
+    def buildKernelApp(self):
+        from IPython.zmq.ipkernel import IPKernelApp
+        app = IPKernelApp.instance()
+        app.initialize(['python', '--pylab=qt'])
+        app.kernel.eventloop = self._event_loop
+        return app
+    
+    def buildKernelManager(self, kernel):
+        connection = kernelManager = None
         try:
-            from IPython.frontend.qt.console.ipython_widget import IPythonWidget
-            self.console = IPythonWidget()
-            self.console.kernel_manager = self.kernelManager
+            from IPython.lib.kernel import find_connection_file
+            from IPython.frontend.qt.kernelmanager import QtKernelManager
+            connection = find_connection_file(kernel.connection_file)
+            kernelManager = QtKernelManager(connection_file=connection_file)
+            kernelManager.load_connection_file()
+            kernelManager.start_channels()
+            atexit.register(kernelManager.cleanup_connection_file)
+        except:
+            pass
+        return kernelManager, connection
+    
+    def setupConsole(self, manager):
+        try:
+            from IPython.frontend.qt.console.rich_ipython_widget import RichIPythonWidget
+            from IPython.utils.traitlets import TraitError
+            try: # Ipython v0.13
+                self.console = RichIPythonWidget(gui_completion='droplist')
+            except TraitError:  # IPython v0.12
+                self.console = RichIPythonWidget(gui_completion=True)
+            self.console.kernel_manager = manager
             self.console.set_default_style(colors="linux")
         except ImportError:
             # Gracefuly fail if iPython is not available
@@ -36,27 +66,7 @@ class IPythonDock(QtGui.QDockWidget, PMXBaseDock):
             tb = format_exc()
             self.console.appendPlainText("IPython console disabled because of\n%s\nPlese install ipython >= 0.11" % tb)
         self.setWidget(self.console)
-
-    def buildKernelManager(self):
-        kernelManager = None
-        try:
-            from IPython.frontend.qt.kernelmanager import QtKernelManager
-            kernelManager = QtKernelManager()
-            kernelManager.start_kernel()
-            kernelManager.start_channels()
-            if hasattr(kernelManager, "connection_file"):
-                ipconnection = kernelManager.connection_file
-            else:
-                shell_port = kernelManager.shell_address[1]
-                iopub_port = kernelManager.sub_address[1]
-                stdin_port = kernelManager.stdin_address[1]
-                hb_port = kernelManager.hb_address[1]
-                ipconnection = "--shell={0} --iopub={1} --stdin={2} --hb={3}".format(shell_port, iopub_port, stdin_port, hb_port)
-        except ImportError as e:
-            self.logger.warn("Warning: %s" % e)
-            ipconnection = kernelManager = None
-        return kernelManager, ipconnection
-        
+    
     def environmentVariables(self):
         env = {}
         if self.connection:
