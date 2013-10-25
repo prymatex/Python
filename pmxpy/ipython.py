@@ -40,7 +40,7 @@ class IPythonDock(QtGui.QDockWidget, PMXBaseDock):
             from IPython.lib.kernel import find_connection_file
             from IPython.frontend.qt.kernelmanager import QtKernelManager
             connection = find_connection_file(kernel.connection_file)
-            kernelManager = QtKernelManager(connection_file=connection_file)
+            kernelManager = QtKernelManager(connection_file=connection)
             kernelManager.load_connection_file()
             kernelManager.start_channels()
             atexit.register(kernelManager.cleanup_connection_file)

@@ -26,7 +26,7 @@ def check(codeString, filename):
     # First, compile into an AST and handle syntax errors.
     try:
         tree = compile(codeString, filename, "exec", _ast.PyCF_ONLY_AST)
-    except SyntaxError, value:
+    except SyntaxError as value:
         msg = value.args[0]
 
         (lineno, offset, text) = value.lineno, value.offset, value.text
@@ -55,7 +55,7 @@ def check(codeString, filename):
         w = checker.Checker(tree, filename)
         w.messages.sort(lambda a, b: cmp(a.lineno, b.lineno))
         for warning in w.messages:
-            print warning
+            print(warning)
         return len(w.messages)
 
 
@@ -67,7 +67,7 @@ def checkPath(filename):
     """
     try:
         return check(file(filename, 'U').read() + '\n', filename)
-    except IOError, msg:
+    except IOError as msg:
         print >> sys.stderr, "%s: %s" % (filename, msg.args[1])
         return 1
 

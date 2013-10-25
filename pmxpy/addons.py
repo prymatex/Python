@@ -2,7 +2,6 @@
 #-*- encoding: utf-8 -*-
 
 from prymatex.qt import QtGui, QtCore
-from prymatex import resources
 
 from prymatex.gui.codeeditor.addons import CodeEditorAddon
 
@@ -36,14 +35,14 @@ class PythonCheckerAddon(CodeEditorAddon):
         errorEnd = errorStart + block.length() - offset
         cursor = self.editor.newCursorAtPosition(errorStart, errorEnd)
         self.errors.setdefault(block, []).append((cursor, text))
-        print text
+        print(text)
         # Solo muestro el primero si tiene muchos errores
         format = "line.warning" if text.startswith("W") else "line.critical"
         self.editor.extendExtraSelectionCursors(format, [ cursor ])
 
     def on_document_contentsChange(self, position, removed, added):
         if self.activated and self.enabled:
-            print position, removed, added
+            print(position, removed, added)
 
     def on_editor_syntaxChanged(self, syntax):
         pass
