@@ -10,7 +10,6 @@ from pmxpy.tools import pyflakesChecker
 
 class PythonCheckerAddon(CodeEditorAddon):
 
-
     def __init__(self, parent):
         CodeEditorAddon.__init__(self, parent)
         self.setObjectName(self.__class__.__name__)
@@ -37,18 +36,17 @@ class PythonCheckerAddon(CodeEditorAddon):
         self.errors.setdefault(block, []).append((cursor, text))
         print(text)
         # Solo muestro el primero si tiene muchos errores
-        format = "line.warning" if text.startswith("W") else "line.critical"
-        self.editor.extendExtraSelectionCursors(format, [ cursor ])
+        frmt = "line.warning" if text.startswith("W") else "line.critical"
+        self.editor.extendExtraSelectionCursors(frmt, [ cursor ])
 
     def on_document_contentsChange(self, position, removed, added):
         if self.activated and self.enabled:
             print(position, removed, added)
 
     def on_editor_syntaxChanged(self, syntax):
-        pass
-        #self.enabled = self.pythonSelector.does_match(syntax.selector)
-        #if self.activated and self.enabled:
-        #    self.checkAllText()
+        self.enabled = self.pythonSelector.does_match(self.editor.basicScope().scope)
+        if self.activated and self.enabled:
+            self.checkAllText()
 
     def checkAllText(self):
         plainText = self.editor.toPlainText()
@@ -57,13 +55,13 @@ class PythonCheckerAddon(CodeEditorAddon):
         pyflakesChecker(plainText.encode("utf8","ignore"), self.editor.filePath)
 
     def textCharFormat_warning_builder(self):
-        format = QtGui.QTextCharFormat()
-        format.setFontUnderline(True)
-        format.setUnderlineColor(QtCore.Qt.yellow)
-        format.setUnderlineStyle(QtGui.QTextCharFormat.SingleUnderline)
-        format.setBackground(QtCore.Qt.transparent)
-        format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
-        return format
+        frmt = QtGui.QTextCharFormat()
+        frmt.setFontUnderline(True)
+        frmt.setUnderlineColor(QtCore.Qt.yellow)
+        frmt.setUnderlineStyle(QtGui.QTextCharFormat.SingleUnderline)
+        frmt.setBackground(QtCore.Qt.transparent)
+        frmt.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
+        return frmt
 
     #QTextCharFormat::NoUnderline
     #QTextCharFormat::SingleUnderline
@@ -75,43 +73,36 @@ class PythonCheckerAddon(CodeEditorAddon):
     #QTextCharFormat::SpellCheckUnderline
 
     def textCharFormat_critical_builder(self):
-        format = QtGui.QTextCharFormat()
-        format.setFontUnderline(True)
-        format.setUnderlineColor(QtCore.Qt.red)
-        format.setUnderlineStyle(QtGui.QTextCharFormat.SingleUnderline)
-        format.setBackground(QtCore.Qt.transparent)
-        format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
-        return format
+        frmt = QtGui.QTextCharFormat()
+        frmt.setFontUnderline(True)
+        frmt.setUnderlineColor(QtCore.Qt.red)
+        frmt.setUnderlineStyle(QtGui.QTextCharFormat.SingleUnderline)
+        frmt.setBackground(QtCore.Qt.transparent)
+        frmt.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
+        return frmt
+    
+    def on_actionChecker_toggled(self, checked):
+        self.activated = checked
+        if self.enabled and self.activated:
+            self.checkAllText()
 
     @classmethod
     def contributeToMainMenu(cls):
-        def on_actionChecker_toggled(editor, checked):
-            instance = editor.findChild(cls, cls.__name__)
-            instance.activated = checked
-            if instance.enabled and instance.activated:
-                instance.checkAllText()
-
-        def on_actionChecker_testChecked(editor):
-            instance = editor.findChild(cls, cls.__name__)
-            return instance is not None and instance.activated
-
-        def on_actionCheckers_testEnabled(editor):
-            instance = editor.findChild(cls, cls.__name__)
-            return instance.enabled
 
         menuEntry = {
             'name': 'python',
             'text': 'P&ython',
+            'testVisible': lambda checker: checker.pythonSelector.does_match(checker.editor.basicScope().scope),
             'items': [
                 {
                     'name': 'checkers',
                     'text': 'Checkers',
-                    'testEnabled': on_actionCheckers_testEnabled,
+                    'testEnabled': lambda checker: checker.enabled,
                     'items': [
                         {   'text': 'Pep8',
                             'checkable': True,
-                            'callback': on_actionChecker_toggled,
-                            'testChecked': on_actionChecker_testChecked,
+                            'callback': cls.on_actionChecker_toggled,
+                            'testChecked': lambda checker: checker.activated,
                         },
                         {   'text': 'Pyflakes',
                             'checkable': True,
