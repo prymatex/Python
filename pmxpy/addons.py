@@ -10,8 +10,8 @@ from pmxpy.tools import pyflakesChecker
 
 class PythonCheckerAddon(CodeEditorAddon):
 
-    def __init__(self, parent):
-        CodeEditorAddon.__init__(self, parent)
+    def __init__(self, **kwargs):
+        super(PythonCheckerAddon, self).__init__(**kwargs)
         self.setObjectName(self.__class__.__name__)
         self.activated = self.enabled = False
         self.checkerThread = CheckerThread(self)
@@ -19,8 +19,8 @@ class PythonCheckerAddon(CodeEditorAddon):
         self.errors = {}
         self.pythonSelector = self.application.supportManager.selectorFactory("source.python")
 
-    def initialize(self, editor):
-        CodeEditorAddon.initialize(self, editor)
+    def initialize(self, **kwargs):
+        super(PythonCheckerAddon, self).initialize(**kwargs)
         self.editor.registerTextCharFormatBuilder("line.warning", self.textCharFormat_warning_builder)
         self.editor.registerTextCharFormatBuilder("line.critical", self.textCharFormat_critical_builder)
 
@@ -88,7 +88,6 @@ class PythonCheckerAddon(CodeEditorAddon):
 
     @classmethod
     def contributeToMainMenu(cls):
-
         menuEntry = {
             'name': 'python',
             'text': 'P&ython',

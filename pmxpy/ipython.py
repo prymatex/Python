@@ -3,7 +3,7 @@
 
 from prymatex.qt import QtGui, QtCore
 
-from prymatex.core import PMXBaseDock
+from prymatex.core import PrymatexDock
 
 from prymatex import resources
 
@@ -36,14 +36,13 @@ def console_widget(kernel_manager):
     console.set_default_style(colors="linux")
     return console
 
-class IPythonDock(QtGui.QDockWidget, PMXBaseDock):
+class IPythonDock(PrymatexDock, QtGui.QDockWidget):
     SHORTCUT = "Shift+F4"
     ICON = resources.getIcon("applications-utilities")
     PREFERED_AREA = QtCore.Qt.BottomDockWidgetArea
     
-    def __init__(self, parent):
-        QtGui.QDockWidget.__init__(self, parent)
-        PMXBaseDock.__init__(self)
+    def __init__(self, **kwargs):
+        super(PrymatexDock, self).__init__(**kwargs)
         self.setWindowTitle("IPython")
         self.setObjectName("IPythonDock")
         try:
