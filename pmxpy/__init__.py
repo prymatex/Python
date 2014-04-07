@@ -7,5 +7,5 @@ from pmxpy.ipython import IPythonDock
 from pmxpy.addons import PythonCheckerAddon
 
 def registerPlugin(manager):
-    #manager.registerComponent(IPythonDock)
+    manager.registerComponent(IPythonDock)
     manager.registerComponent(PythonCheckerAddon, CodeEditor)

@@ -13,7 +13,7 @@ def event_loop(kernel):
     kernel.timer.start(1000 * kernel._poll_interval)
 
 def default_kernel_app():
-    from IPython.zmq.ipkernel import IPKernelApp
+    from IPython.kernel.zmq.kernelapp import IPKernelApp
     app = IPKernelApp.instance()
     app.initialize(['python', '--pylab=qt'])
     app.kernel.eventloop = event_loop
@@ -21,24 +21,26 @@ def default_kernel_app():
 
 def default_kernel_manager(kernel_app):
     from IPython.lib.kernel import find_connection_file
-    from IPython.frontend.qt.kernelmanager import QtKernelManager
+    from IPython.qt.manager import QtKernelManager
     connection = find_connection_file(kernel_app.connection_file)
     kernelManager = QtKernelManager(connection_file=connection)
-    kernelManager.load_connection_file()
-    kernelManager.start_channels()
+    kernelClient = kernelManager.client()
+    kernelClient.load_connection_file()
+    kernelClient.start_channels()
     #atexit.register(kernelManager.cleanup_connection_file)
-    return kernelManager, connection
+    return kernelManager, kernelClient, connection
 
-def console_widget(kernel_manager):
+def console_widget(kernel_manager, kernel_client):
     from IPython.frontend.qt.console.ipython_widget import IPythonWidget
     console = IPythonWidget(gui_completion='droplist')
+    console.kernel_client = kernel_client
     console.kernel_manager = kernel_manager
     console.set_default_style(colors="linux")
     return console
 
 class IPythonDock(PrymatexDock, QtGui.QDockWidget):
     SHORTCUT = "Shift+F4"
-    ICON = resources.getIcon("applications-utilities")
+    ICON = resources.get_icon("applications-utilities")
     PREFERED_AREA = QtCore.Qt.BottomDockWidgetArea
     
     def __init__(self, **kwargs):
@@ -47,8 +49,11 @@ class IPythonDock(PrymatexDock, QtGui.QDockWidget):
         self.setObjectName("IPythonDock")
         try:
             self.kernelApp = default_kernel_app()
-            self.kernelManager, self.connection = default_kernel_manager(self.kernelApp)
-            self.console = console_widget(self.kernelManager)
+            self.kernelManager, self.kernelClient, self.connection = default_kernel_manager(self.kernelApp)
+            self.console = console_widget(self.kernelManager, self.kernelClient)
+
+            self.kernelApp.shell.user_ns.update({"prymatex": self })
+            self.kernelApp.start()
         except:
             # Gracefuly fail if iPython is not available
             from traceback import format_exc
@@ -57,10 +62,6 @@ class IPythonDock(PrymatexDock, QtGui.QDockWidget):
             tb = format_exc()
             self.console.appendPlainText("IPython console disabled because of\n%s\nPlese install ipython >= 0.11" % tb)
         self.setWidget(self.console)
-        
-        self.kernelApp.shell.user_ns.update({"prymatex": self })
-        
-        self.kernelApp.start()
         
     def environmentVariables(self):
         env = {}
