@@ -1,3 +1,4 @@
 .pmxproject
 *.py[cw]
 __pychache__
+*.*~
