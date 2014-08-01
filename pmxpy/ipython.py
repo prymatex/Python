@@ -47,6 +47,7 @@ class IPythonDock(PrymatexDock, QtGui.QDockWidget):
         super(PrymatexDock, self).__init__(**kwargs)
         self.setWindowTitle("IPython")
         self.setObjectName("IPythonDock")
+        self.kernelManager = self.kernelClient = self.connection = None
         try:
             self.kernelApp = default_kernel_app()
             self.kernelManager, self.kernelClient, self.connection = default_kernel_manager(self.kernelApp)
@@ -72,7 +73,9 @@ class IPythonDock(PrymatexDock, QtGui.QDockWidget):
         
     @classmethod
     def contributeToMainMenu(cls):
-        menuEntry = {
+        menu = {}
+        menu["python"] = {
+            'before': 'bundles',
             'name': 'python',
             'text': 'P&ython',
             'items': [
@@ -82,8 +85,8 @@ class IPythonDock(PrymatexDock, QtGui.QDockWidget):
                     'items': [
                         {'text': 'Option1' },
                         {'text': 'Option2' },
-                        {'text': 'Option3'}]
+                        {'text': 'Option3' }]
                 }
             ]
         }
-        return { 'python': menuEntry }
+        return menu
