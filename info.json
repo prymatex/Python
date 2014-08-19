@@ -1,6 +1,6 @@
 {
     "id": "org.prymatex.python",
-    "name" : "Python Tools",
+    "title" : "Python Tools",
     "icon": "share/Icons/python.png",
     "version" : "1.0",
     "website" : "www.prymatex.org",
