@@ -1,7 +1,6 @@
 {
     "id": "org.prymatex.python",
     "title" : "Python Tools",
-    "icon": "share/Icons/python.png",
     "version" : "1.0",
     "website" : "www.prymatex.org",
     "author" : "Prymatex Team",
@@ -10,6 +9,7 @@
     "paths": [],
     "package": "pmxpy",
     "share": "share",
+    "icon": ":/python.png",
     "register": "registerPlugin",
     "unregister": "unregisterPlugin"
 }
