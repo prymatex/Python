@@ -5,8 +5,6 @@ from prymatex.qt import QtGui, QtCore
 
 from prymatex.core import PrymatexDock
 
-from prymatex import resources
-
 def event_loop(kernel):
     kernel.timer = QtCore.QTimer()
     kernel.timer.timeout.connect(kernel.do_one_iteration)
@@ -40,7 +38,7 @@ def console_widget(kernel_manager, kernel_client):
 
 class IPythonDock(PrymatexDock, QtGui.QDockWidget):
     SHORTCUT = "Shift+F4"
-    ICON = resources.get_icon("applications-utilities")
+    ICON = "applications-utilities"
     PREFERED_AREA = QtCore.Qt.BottomDockWidgetArea
     
     def __init__(self, **kwargs):
