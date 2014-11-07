@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #-*- encoding: utf-8 -*-
 
-from prymatex.qt import QtGui, QtCore
+from prymatex.qt import QtGui, QtCore, QtWidgets
 
 from prymatex.core import PrymatexDock
 
@@ -36,7 +36,7 @@ def console_widget(kernel_manager, kernel_client):
     console.set_default_style(colors="linux")
     return console
 
-class IPythonDock(PrymatexDock, QtGui.QDockWidget):
+class IPythonDock(PrymatexDock, QtWidgets.QDockWidget):
     SHORTCUT = "Shift+F4"
     ICON = "applications-utilities"
     PREFERED_AREA = QtCore.Qt.BottomDockWidgetArea
@@ -56,7 +56,7 @@ class IPythonDock(PrymatexDock, QtGui.QDockWidget):
         except:
             # Gracefuly fail if iPython is not available
             from traceback import format_exc
-            self.console = QtGui.QPlainTextEdit()
+            self.console = QtWidgets.QPlainTextEdit()
             self.console.setReadOnly(True)
             tb = format_exc()
             self.console.appendPlainText("IPython console disabled because of\n%s\nPlese install ipython >= 0.11" % tb)
