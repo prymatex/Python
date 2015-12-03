@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 #-*- encoding: utf-8 -*-
 
-from prymatex.qt import QtGui, QtCore, QtWidgets
+import logging
 
+from prymatex.qt import QtGui, QtCore, QtWidgets
 from prymatex.core import PrymatexDock
+
+loger = logging.getLogger(__name__)
+loger.debug("Run ipython plugin from directory: %s" % __prymatex__.directory)
 
 def event_loop(kernel):
     kernel.timer = QtCore.QTimer()
@@ -88,3 +92,5 @@ class IPythonDock(PrymatexDock, QtWidgets.QDockWidget):
             ]
         }
         return menu
+
+#__prymatex__.registerComponent(IPythonDock)

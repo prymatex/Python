@@ -1,0 +1,13 @@
+{
+    "id": "org.prymatex.python",
+    "title" : "Python Tools",
+    "details": "https://github.com/prymatex/Python",
+    "description" : "",
+    "icon": ":/python.png",
+    "version" : "1.0",
+    "homepage": "https://github.com/prymatex/Python",
+    "readme": "https://github.com/prymatex/Python/README.md",
+    "labels": [ "python" ],
+    "author" : "Prymatex Team",
+    "depends" : [ "org.prymatex.codeeditor" ]
+}
